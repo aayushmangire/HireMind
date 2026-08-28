@@ -29,7 +29,9 @@ import {
 interface EvaluationDashboardProps {
   result: EvaluationResult;
   onReset: () => void;
+  defaultTab?: 'profile' | 'agents' | 'debate' | 'decision';
 }
+
 
 const AGENT_CONFIGS: Record<string, { icon: any; color: string; bg: string; border: string; badge: string; voicePitch: number; voiceRate: number }> = {
   'Technical Evaluator': {
@@ -86,11 +88,12 @@ function getPersonaVoice(name: string) {
   return PERSONA_VOICES['Hiring Manager'] || PERSONA_VOICES['Technical Evaluator'];
 }
 
-export default function EvaluationDashboard({ result, onReset }: EvaluationDashboardProps) {
-  // Reordered: 1. Facts/Info -> 2. Personas -> 3. Debate -> 4. Decision
-  const [activeTab, setActiveTab] = useState<'profile' | 'agents' | 'debate' | 'decision'>('profile');
+export default function EvaluationDashboard({ result, onReset, defaultTab = 'debate' }: EvaluationDashboardProps) {
+  // Tabs: 1. Facts/Info -> 2. Personas -> 3. Debate -> 4. Decision (defaulting to 'debate' for immediate AI discussion view)
+  const [activeTab, setActiveTab] = useState<'profile' | 'agents' | 'debate' | 'decision'>(defaultTab);
   const [selectedAgentIndex, setSelectedAgentIndex] = useState(0);
   const [activeRound, setActiveRound] = useState(1);
+
 
   // ElevenLabs Voice State
   const [isPlayingVoice, setIsPlayingVoice] = useState(false);

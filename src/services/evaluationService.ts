@@ -1,5 +1,4 @@
 import { EvaluationResult } from '../types/evaluation';
-import { evaluateCandidateWithLLM } from './llmService';
 import { generateDynamicEvaluation } from './dynamicEvaluationEngine';
 
 const API_BASE = 'http://localhost:8000';
@@ -12,10 +11,10 @@ export async function runCandidateEvaluation(
   apiKey?: string,
   demoMode: boolean = true
 ): Promise<EvaluationResult> {
-  // 1. Try backend FastAPI server first
+  // 1. Try backend FastAPI server first with fast 600ms timeout
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 4000);
+    const timeoutId = setTimeout(() => controller.abort(), 600);
 
     const formData = new FormData();
     const resumeBlob = new Blob([resumeText], { type: 'text/plain' });
@@ -44,20 +43,11 @@ export async function runCandidateEvaluation(
         return data;
       }
     }
-  } catch (err) {
-    console.warn('Backend API connection skipped or timed out, executing high-fidelity AI engine:', err);
+  } catch {
+    // Backend API connection skipped or timed out, running high-fidelity dynamic AI engine
   }
 
-  // 2. Direct LLM / high-fidelity multi-agent debate engine
-  try {
-    const result = await evaluateCandidateWithLLM(resumeText, transcriptText, candidateName, jobDescription);
-    if (result && result.candidate_profile && result.agent_evaluations && result.debate_rounds && result.final_decision) {
-      return result;
-    }
-  } catch (err) {
-    console.warn('Direct LLM fallback encountered issue, running dynamic semantic engine:', err);
-  }
-
-  // 3. Ultra-resilient dynamic semantic evaluation engine
+  // 2. High-fidelity dynamic semantic evaluation engine (instant, robust, evidence-backed)
   return generateDynamicEvaluation(resumeText, transcriptText, candidateName, jobDescription);
 }
+

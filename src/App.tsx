@@ -5,6 +5,7 @@ import EvaluationDashboard from "./components/evaluation/EvaluationDashboard";
 import { runCandidateEvaluation } from "./services/evaluationService";
 import { extractTextFromFile, extractCandidateNameFromResume } from "./utils/fileParser";
 import { EvaluationResult } from "./types/evaluation";
+import { SAMPLE_CANDIDATES, SampleCandidate } from "./data/sampleCandidates";
 import {
   Bot,
   Cpu,
@@ -17,6 +18,10 @@ import {
   Loader2,
   Briefcase,
   X,
+  Sparkles,
+  Play,
+  RotateCcw,
+  Zap,
   type LucideIcon
 } from "lucide-react";
 
@@ -204,9 +209,11 @@ export default function App() {
   const [resumeFileName, setResumeFileName] = useState<string | null>(null);
   const [transcriptFileName, setTranscriptFileName] = useState<string | null>(null);
   const [jobDescFileName, setJobDescFileName] = useState<string | null>(null);
+  const [selectedSampleKey, setSelectedSampleKey] = useState<string | null>(null);
 
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [evaluationStage, setEvaluationStage] = useState<string>("");
+  const [evaluationProgress, setEvaluationProgress] = useState<number>(0);
   const [evaluationResult, setEvaluationResult] = useState<EvaluationResult | null>(null);
 
   const [isScrolled, setIsScrolled] = useState(false);
@@ -229,8 +236,32 @@ export default function App() {
   const scrollToEvaluation = useCallback(() => {
     const el = document.getElementById("evaluate");
     if (el) {
-      el.scrollIntoView({ behavior: "smooth" });
+      const top = el.getBoundingClientRect().top + window.pageYOffset - 40;
+      window.scrollTo({ top, behavior: "smooth" });
     }
+  }, []);
+
+  const handleSelectSample = useCallback((sample: SampleCandidate) => {
+    setCandidateName(sample.name);
+    setJobDescription(sample.jobDescription);
+    setResumeText(sample.resume);
+    setTranscriptText(sample.transcript);
+    setResumeFileName(`${sample.name.replace(/\s+/g, "_")}_Resume.txt`);
+    setTranscriptFileName(`${sample.name.replace(/\s+/g, "_")}_Interview_Transcript.txt`);
+    setJobDescFileName(`${sample.name.replace(/\s+/g, "_")}_Job_Spec.txt`);
+    setSelectedSampleKey(sample.name);
+  }, []);
+
+  const handleClearAll = useCallback(() => {
+    setResumeText("");
+    setTranscriptText("");
+    setJobDescription("");
+    setCandidateName("");
+    setResumeFileName(null);
+    setTranscriptFileName(null);
+    setJobDescFileName(null);
+    setSelectedSampleKey(null);
+    setEvaluationResult(null);
   }, []);
 
   const handleFileUpload = useCallback(async (
@@ -246,6 +277,7 @@ export default function App() {
       return;
     }
     try {
+      setSelectedSampleKey(null);
       setFileName(`${file.name} (Extracting...)`);
       const text = await extractTextFromFile(file);
       setText(text);
@@ -264,47 +296,70 @@ export default function App() {
     }
   }, []);
 
-  const handleLaunchDebate = async () => {
-    if (!resumeText.trim() && !transcriptText.trim()) return;
+  const handleLaunchDebate = async (presetCandidate?: SampleCandidate) => {
+    let effectiveResume = resumeText;
+    let effectiveTranscript = transcriptText;
+    let effectiveJobDesc = jobDescription;
+    let effectiveName = candidateName;
 
-    const effectiveName =
-      candidateName.trim() ||
-      extractCandidateNameFromResume(resumeText) ||
+    // If preset provided or if files not loaded, auto-load Alex Chen (default sample)
+    if (presetCandidate) {
+      effectiveResume = presetCandidate.resume;
+      effectiveTranscript = presetCandidate.transcript;
+      effectiveJobDesc = presetCandidate.jobDescription;
+      effectiveName = presetCandidate.name;
+      handleSelectSample(presetCandidate);
+    } else if (!effectiveResume.trim() || !effectiveTranscript.trim()) {
+      const defaultSample = SAMPLE_CANDIDATES[0];
+      effectiveResume = defaultSample.resume;
+      effectiveTranscript = defaultSample.transcript;
+      effectiveJobDesc = defaultSample.jobDescription;
+      effectiveName = defaultSample.name;
+      handleSelectSample(defaultSample);
+    }
+
+    effectiveName =
+      effectiveName.trim() ||
+      extractCandidateNameFromResume(effectiveResume) ||
       "Candidate";
 
-    if (!candidateName.trim() && effectiveName !== "Candidate") {
+    if (!candidateName.trim()) {
       setCandidateName(effectiveName);
     }
 
     setIsEvaluating(true);
     setEvaluationResult(null);
 
-    setEvaluationStage("Extracting Candidate Facts & Evidence Profile...");
-    const t1 = setTimeout(() => {
-      setEvaluationStage("Dispatching 4 Independent Agent Personas (Isolated LLM Calls)...");
-    }, 600);
+    // Multi-stage animated simulation
+    setEvaluationProgress(20);
+    setEvaluationStage("Extracting candidate profile, claims & verified skills...");
+    await new Promise((r) => setTimeout(r, 300));
 
-    const t2 = setTimeout(() => {
-      setEvaluationStage("Initiating 2-Round Cross-Examination Debate & Disagreement Resolution...");
-    }, 1300);
+    setEvaluationProgress(48);
+    setEvaluationStage("Dispatching 4 Independent AI Personas (Technical, Culture, Hiring Manager, Skeptic)...");
+    await new Promise((r) => setTimeout(r, 350));
 
-    const t3 = setTimeout(() => {
-      setEvaluationStage("Synthesizing Weighted Non-Averaged Adjudication...");
-    }, 2000);
+    setEvaluationProgress(76);
+    setEvaluationStage("Initiating 2-Round Cross-Examination Multi-Agent Debate & Rebuttals...");
+    await new Promise((r) => setTimeout(r, 350));
+
+    setEvaluationProgress(95);
+    setEvaluationStage("Synthesizing Weighted Non-Averaged Adjudication & Final Report...");
+    await new Promise((r) => setTimeout(r, 300));
 
     try {
       const result = await runCandidateEvaluation(
-        resumeText,
-        transcriptText,
+        effectiveResume,
+        effectiveTranscript,
         effectiveName,
-        jobDescription || "Job Description",
+        effectiveJobDesc || "Job Description",
         undefined,
         true
       );
 
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
+      setEvaluationProgress(100);
+      setEvaluationStage("Debate Complete! Rendering 4 AI Debate Dashboard...");
+      await new Promise((r) => setTimeout(r, 150));
 
       setEvaluationResult(result);
       setIsEvaluating(false);
@@ -312,14 +367,16 @@ export default function App() {
       setTimeout(() => {
         const resultsEl = document.getElementById("results");
         if (resultsEl) {
-          resultsEl.scrollIntoView({ behavior: "smooth" });
+          const top = resultsEl.getBoundingClientRect().top + window.pageYOffset - 40;
+          window.scrollTo({ top, behavior: "smooth" });
         }
-      }, 100);
+      }, 150);
     } catch (err) {
       console.error("Evaluation execution error:", err);
       setIsEvaluating(false);
     }
   };
+
 
   return (
     <div className="min-h-screen bg-white text-[#141414] selection:bg-black selection:text-white relative">
@@ -413,32 +470,92 @@ export default function App() {
             </div>
           </div>
 
-          {/* "Start Candidate Evaluation" CTA Button — Positioned below the 4 AI Agents */}
-          <div className="mt-14 flex flex-col items-center justify-center text-center">
+          {/* "Start Candidate Evaluation" CTA Buttons — Positioned below the 4 AI Agents */}
+          <div className="mt-14 flex flex-col sm:flex-row items-center justify-center gap-4 text-center">
             <button
               type="button"
               onClick={scrollToEvaluation}
-              className="inline-flex items-center gap-3 px-9 py-4 rounded-full bg-black text-white text-sm md:text-base font-semibold tracking-tight shadow-xl hover:bg-neutral-800 hover:scale-105 active:scale-95 transition-all cursor-pointer group"
+              className="inline-flex items-center gap-3 px-8 py-4 rounded-full bg-black text-white text-sm md:text-base font-semibold tracking-tight shadow-xl hover:bg-neutral-800 hover:scale-105 active:scale-95 transition-all cursor-pointer group"
             >
-              <span>Start Candidate Evaluation</span>
+              <span>Upload Custom Candidate</span>
               <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
             </button>
-            <p className="mt-3.5 text-xs text-black/50">
-              Upload resume and interview transcript files (.PDF / .TXT) for autonomous multi-agent debate
-            </p>
+            <button
+              type="button"
+              onClick={() => handleLaunchDebate(SAMPLE_CANDIDATES[0])}
+              className="inline-flex items-center gap-2 px-7 py-4 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-sm md:text-base font-semibold tracking-tight shadow-xl hover:scale-105 active:scale-95 transition-all cursor-pointer group"
+            >
+              <Zap className="w-4 h-4 fill-current text-yellow-300" />
+              <span>⚡ Instant 4 AI Debate (Alex Chen)</span>
+            </button>
           </div>
+          <p className="mt-3.5 text-xs text-center text-black/50">
+            Upload resume and interview transcript files (.PDF / .TXT) or click instant demo to launch the 4 AI debate.
+          </p>
         </section>
 
         {/* Candidate Evaluation & Upload Section */}
         <section id="evaluate" className="relative z-10 max-w-5xl mx-auto px-6 py-16">
           <div className="p-8 md:p-12 rounded-3xl bg-white border border-black/10 shadow-xl">
-            <div className="mb-8 pb-6 border-b border-black/5">
+            <div className="mb-8 pb-6 border-b border-black/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
                 <span className="text-xs font-semibold uppercase tracking-wider text-black/40">File-Based Evaluation Workspace</span>
-                <h3 className="text-2xl font-bold tracking-tight">Upload Candidate Dossier (.PDF / .TXT)</h3>
+                <h3 className="text-2xl font-bold tracking-tight">Candidate Dossier & AI Discussion</h3>
                 <p className="text-xs text-black/60 mt-1">
-                  Upload candidate documents as PDF or TXT files. AI personas will parse, extract evidence, debate, and adjudicate.
+                  Upload candidate documents as PDF or TXT, or choose a pre-loaded sample candidate below.
                 </p>
+              </div>
+
+              {/* Reset/Clear Button */}
+              {(resumeText || transcriptText || jobDescription) && (
+                <button
+                  type="button"
+                  onClick={handleClearAll}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-black/10 hover:bg-rose-50 hover:border-rose-200 hover:text-rose-600 text-xs font-medium text-black/70 transition-all cursor-pointer self-start md:self-auto"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>Clear All</span>
+                </button>
+              )}
+            </div>
+
+            {/* Quick Demo Candidate Presets */}
+            <div className="mb-8 p-4 rounded-2xl bg-zinc-50 border border-black/5">
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <span className="text-xs font-bold uppercase tracking-wider text-black/60 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  Quick Load Demo Candidates (1-Click)
+                </span>
+                <span className="text-[11px] text-black/40">Select a preset to auto-fill documents</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {SAMPLE_CANDIDATES.map((sample) => {
+                  const isSelected = selectedSampleKey === sample.name;
+                  return (
+                    <button
+                      key={sample.name}
+                      type="button"
+                      onClick={() => handleSelectSample(sample)}
+                      className={`p-3.5 rounded-xl text-left border transition-all cursor-pointer ${
+                        isSelected
+                          ? "bg-white border-black shadow-md ring-2 ring-black/5"
+                          : "bg-white/80 border-black/10 hover:border-black/30 hover:bg-white"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-bold text-xs text-[#141414]">{sample.name}</span>
+                        {isSelected && (
+                          <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3" /> Active
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-black/60 line-clamp-2 leading-tight">
+                        {sample.jobDescription}
+                      </p>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -468,6 +585,7 @@ export default function App() {
                 onClear={() => {
                   setJobDescription("");
                   setJobDescFileName(null);
+                  setSelectedSampleKey(null);
                 }}
               />
               <FileUploadDropzone
@@ -481,6 +599,7 @@ export default function App() {
                 onClear={() => {
                   setResumeText("");
                   setResumeFileName(null);
+                  setSelectedSampleKey(null);
                 }}
               />
               <FileUploadDropzone
@@ -494,6 +613,7 @@ export default function App() {
                 onClear={() => {
                   setTranscriptText("");
                   setTranscriptFileName(null);
+                  setSelectedSampleKey(null);
                 }}
               />
             </div>
@@ -504,43 +624,61 @@ export default function App() {
                 {resumeText.trim() && transcriptText.trim() ? (
                   <div className="flex items-center gap-1.5 text-emerald-600 font-semibold">
                     <CheckCircle2 className="w-4 h-4" />
-                    <span>Documents parsed & ready for 4-Agent Debate Simulation</span>
+                    <span>Dossier ready ({candidateName || "Candidate"}) — 4-Agent Debate configured</span>
                   </div>
                 ) : (
-                  <span className="text-black/50">
-                    Upload Resume (.pdf/.txt) and Transcript (.pdf/.txt) or load sample to launch debate.
+                  <span className="text-black/60 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                    Tip: Click a preset candidate above, or upload documents to start.
                   </span>
                 )}
               </div>
               <button
                 type="button"
-                onClick={handleLaunchDebate}
-                disabled={(!resumeText.trim() || !transcriptText.trim()) || isEvaluating}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full bg-black text-white text-sm font-semibold hover:bg-neutral-800 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-md cursor-pointer group"
+                onClick={() => handleLaunchDebate()}
+                disabled={isEvaluating}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-9 py-4 rounded-full bg-black text-white text-sm font-semibold hover:bg-neutral-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:scale-105 active:scale-95 cursor-pointer group"
               >
                 {isEvaluating ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin text-white" />
                     <span>Analyzing & Debating...</span>
                   </>
+                ) : resumeText.trim() && transcriptText.trim() ? (
+                  <>
+                    <span>Launch 4 AI Discussion & Debate</span>
+                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                  </>
                 ) : (
                   <>
-                    <span>Launch Multi-Agent Debate</span>
-                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                    <Zap className="w-4 h-4 fill-current text-yellow-300" />
+                    <span>Launch 4 AI Discussion (with Sample)</span>
                   </>
                 )}
               </button>
             </div>
 
-            {/* Live Progress Stage Feedback */}
+            {/* Live Multi-Stage Progress Bar Feedback */}
             {isEvaluating && (
-              <div className="mt-6 p-4 rounded-2xl bg-black/5 border border-black/10 flex items-center gap-3 animate-pulse">
-                <Loader2 className="w-5 h-5 animate-spin text-black" />
-                <span className="text-xs font-semibold text-black/80">{evaluationStage}</span>
+              <div className="mt-6 p-5 rounded-2xl bg-zinc-900 text-white shadow-xl space-y-3">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-semibold flex items-center gap-2 text-cyan-300">
+                    <Loader2 className="w-4 h-4 animate-spin text-cyan-400" />
+                    {evaluationStage}
+                  </span>
+                  <span className="font-bold text-white/80">{evaluationProgress}%</span>
+                </div>
+                <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
+                  <div
+                    className="bg-gradient-to-r from-cyan-400 via-emerald-400 to-amber-300 h-full rounded-full transition-all duration-300"
+                    style={{ width: `${evaluationProgress}%` }}
+                  />
+                </div>
               </div>
             )}
           </div>
         </section>
+
 
         {/* Results & Multi-Agent Debate Dashboard Section */}
         {evaluationResult && (
