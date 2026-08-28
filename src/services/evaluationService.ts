@@ -1,4 +1,5 @@
 import { EvaluationResult } from '../types/evaluation';
+import { evaluateCandidateWithLLM } from './llmService';
 import { generateDynamicEvaluation } from './dynamicEvaluationEngine';
 
 const API_BASE = 'http://localhost:8000';
@@ -11,7 +12,7 @@ export async function runCandidateEvaluation(
   apiKey?: string,
   demoMode: boolean = true
 ): Promise<EvaluationResult> {
-  // 1. Try backend FastAPI server first with fast 600ms timeout
+  // 1. Try backend FastAPI server first if online
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 600);
@@ -44,10 +45,21 @@ export async function runCandidateEvaluation(
       }
     }
   } catch {
-    // Backend API connection skipped or timed out, running high-fidelity dynamic AI engine
+    // Backend offline
   }
 
-  // 2. High-fidelity dynamic semantic evaluation engine (instant, robust, evidence-backed)
+  // 2. Direct LLM / high-fidelity AI multi-agent evaluation
+  try {
+    const result = await evaluateCandidateWithLLM(resumeText, transcriptText, candidateName, jobDescription);
+    if (result && result.candidate_profile && result.agent_evaluations && result.debate_rounds && result.final_decision) {
+      return result;
+    }
+  } catch {
+    // LLM fallback
+  }
+
+  // 3. High-fidelity dynamic semantic evaluation engine (resilient fallback)
   return generateDynamicEvaluation(resumeText, transcriptText, candidateName, jobDescription);
 }
+
 

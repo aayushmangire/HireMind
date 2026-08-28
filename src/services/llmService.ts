@@ -1,7 +1,11 @@
 import { EvaluationResult } from '../types/evaluation';
 import { generateDynamicEvaluation } from './dynamicEvaluationEngine';
 
-const NVIDIA_NIM_URL = 'https://integrate.api.nvidia.com/v1/chat/completions';
+const ENDPOINTS = [
+  '/api/nvidia/v1/chat/completions',
+  'https://integrate.api.nvidia.com/v1/chat/completions'
+];
+
 const API_KEYS = [
   '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',
   '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'
@@ -23,41 +27,43 @@ export async function callNvidiaLLM(
   maxTokens: number = 2048
 ): Promise<string> {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 4000);
+  const timeoutId = setTimeout(() => controller.abort(), 6000);
 
   try {
-    for (const key of API_KEYS) {
-      for (const model of PREFERRED_MODELS) {
-        try {
-          const res = await fetch(NVIDIA_NIM_URL, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${key}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              model,
-              messages: [
-                { role: 'system', content: systemPrompt },
-                { role: 'user', content: userPrompt }
-              ],
-              temperature,
-              max_tokens: maxTokens,
-              response_format: { type: 'json_object' }
-            }),
-            signal: controller.signal
-          });
+    for (const endpoint of ENDPOINTS) {
+      for (const key of API_KEYS) {
+        for (const model of PREFERRED_MODELS) {
+          try {
+            const res = await fetch(endpoint, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${key}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                model,
+                messages: [
+                  { role: 'system', content: systemPrompt },
+                  { role: 'user', content: userPrompt }
+                ],
+                temperature,
+                max_tokens: maxTokens,
+                response_format: { type: 'json_object' }
+              }),
+              signal: controller.signal
+            });
 
-          if (res.ok) {
-            const data = await res.json();
-            const content = data.choices?.[0]?.message?.content;
-            if (content) {
-              clearTimeout(timeoutId);
-              return content;
+            if (res.ok) {
+              const data = await res.json();
+              const content = data.choices?.[0]?.message?.content;
+              if (content) {
+                clearTimeout(timeoutId);
+                return content;
+              }
             }
+          } catch {
+            // try next endpoint/key/model
           }
-        } catch {
-          // try next model
         }
       }
     }
@@ -67,6 +73,7 @@ export async function callNvidiaLLM(
 
   throw new Error('NVIDIA LLM completion unavailable');
 }
+
 
 /**
  * Runs the full 4-agent evaluation pipeline using real LLM calls for any candidate.

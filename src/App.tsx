@@ -365,12 +365,11 @@ export default function App() {
       setIsEvaluating(false);
 
       setTimeout(() => {
-        const resultsEl = document.getElementById("results");
-        if (resultsEl) {
-          const top = resultsEl.getBoundingClientRect().top + window.pageYOffset - 40;
-          window.scrollTo({ top, behavior: "smooth" });
+        const evalEl = document.getElementById("evaluate");
+        if (evalEl) {
+          evalEl.scrollIntoView({ behavior: "smooth", block: "start" });
         }
-      }, 150);
+      }, 50);
     } catch (err) {
       console.error("Evaluation execution error:", err);
       setIsEvaluating(false);
@@ -487,198 +486,217 @@ export default function App() {
         </section>
 
         {/* Candidate Evaluation & Upload Section */}
-        <section id="evaluate" className="relative z-10 max-w-5xl mx-auto px-6 py-16">
-          <div className="p-8 md:p-12 rounded-3xl bg-white border border-black/10 shadow-xl">
-            <div className="mb-8 pb-6 border-b border-black/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div>
-                <span className="text-xs font-semibold uppercase tracking-wider text-black/40">File-Based Evaluation Workspace</span>
-                <h3 className="text-2xl font-bold tracking-tight">Candidate Dossier & AI Discussion</h3>
-                <p className="text-xs text-black/60 mt-1">
-                  Upload candidate documents as PDF or TXT, or choose a pre-loaded sample candidate below.
-                </p>
+        <section id="evaluate" className="relative z-10 max-w-5xl mx-auto px-6 py-16 scroll-mt-6">
+          {!evaluationResult ? (
+            <div className="p-8 md:p-12 rounded-3xl bg-white border border-black/10 shadow-xl">
+              <div className="mb-8 pb-6 border-b border-black/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <span className="text-xs font-semibold uppercase tracking-wider text-black/40">File-Based Evaluation Workspace</span>
+                  <h3 className="text-2xl font-bold tracking-tight">Candidate Dossier & AI Discussion</h3>
+                  <p className="text-xs text-black/60 mt-1">
+                    Upload candidate documents as PDF or TXT, or choose a pre-loaded sample candidate below.
+                  </p>
+                </div>
+
+                {/* Reset/Clear Button */}
+                {(resumeText || transcriptText || jobDescription) && (
+                  <button
+                    type="button"
+                    onClick={handleClearAll}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-black/10 hover:bg-rose-50 hover:border-rose-200 hover:text-rose-600 text-xs font-medium text-black/70 transition-all cursor-pointer self-start md:self-auto"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span>Clear All</span>
+                  </button>
+                )}
               </div>
 
-              {/* Reset/Clear Button */}
-              {(resumeText || transcriptText || jobDescription) && (
+              {/* Quick Demo Candidate Presets */}
+              <div className="mb-8 p-4 rounded-2xl bg-zinc-50 border border-black/5">
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <span className="text-xs font-bold uppercase tracking-wider text-black/60 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                    Quick Load Demo Candidates (1-Click)
+                  </span>
+                  <span className="text-[11px] text-black/40">Select a preset to auto-fill documents</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {SAMPLE_CANDIDATES.map((sample) => {
+                    const isSelected = selectedSampleKey === sample.name;
+                    return (
+                      <button
+                        key={sample.name}
+                        type="button"
+                        onClick={() => handleSelectSample(sample)}
+                        className={`p-3.5 rounded-xl text-left border transition-all cursor-pointer ${
+                          isSelected
+                            ? "bg-white border-black shadow-md ring-2 ring-black/5"
+                            : "bg-white/80 border-black/10 hover:border-black/30 hover:bg-white"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-bold text-xs text-[#141414]">{sample.name}</span>
+                          {isSelected && (
+                            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full flex items-center gap-1">
+                              <CheckCircle2 className="w-3 h-3" /> Active
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-black/60 line-clamp-2 leading-tight">
+                          {sample.jobDescription}
+                        </p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Candidate Name Input */}
+              <div className="mb-6">
+                <label className="block text-xs font-semibold text-black/70 mb-1.5">
+                  Candidate Name <span className="text-black/40 font-normal">(Auto-detected from resume or enter manually)</span>
+                </label>
+                <input
+                  type="text"
+                  value={candidateName}
+                  onChange={(e) => setCandidateName(e.target.value)}
+                  placeholder="e.g. Alex Chen (auto-detected from uploaded resume)"
+                  className="w-full px-4 py-2.5 rounded-xl border border-black/10 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-black/20"
+                />
+              </div>
+
+              {/* 3 Dedicated PDF / TXT File Upload Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+                <FileUploadDropzone
+                  label="Job Description"
+                  description="Target role specification & requirements"
+                  icon={Briefcase}
+                  fileName={jobDescFileName}
+                  extractedText={jobDescription}
+                  onFileSelect={(file) => handleFileUpload(file, setJobDescription, setJobDescFileName, false)}
+                  onClear={() => {
+                    setJobDescription("");
+                    setJobDescFileName(null);
+                    setSelectedSampleKey(null);
+                  }}
+                />
+                <FileUploadDropzone
+                  label="Resume / CV"
+                  description="Candidate career history, skills & achievements"
+                  icon={FileText}
+                  fileName={resumeFileName}
+                  extractedText={resumeText}
+                  required
+                  onFileSelect={(file) => handleFileUpload(file, setResumeText, setResumeFileName, true)}
+                  onClear={() => {
+                    setResumeText("");
+                    setResumeFileName(null);
+                    setSelectedSampleKey(null);
+                  }}
+                />
+                <FileUploadDropzone
+                  label="Interview Transcript"
+                  description="Raw dialogue & Q&A transcript"
+                  icon={Upload}
+                  fileName={transcriptFileName}
+                  extractedText={transcriptText}
+                  required
+                  onFileSelect={(file) => handleFileUpload(file, setTranscriptText, setTranscriptFileName, false)}
+                  onClear={() => {
+                    setTranscriptText("");
+                    setTranscriptFileName(null);
+                    setSelectedSampleKey(null);
+                  }}
+                />
+              </div>
+
+              {/* Action Bar */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-black/5">
+                <div className="text-xs flex items-center gap-1.5">
+                  {resumeText.trim() && transcriptText.trim() ? (
+                    <div className="flex items-center gap-1.5 text-emerald-600 font-semibold">
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>Dossier ready ({candidateName || "Candidate"}) — 4 AI Personas configured</span>
+                    </div>
+                  ) : (
+                    <span className="text-black/60 flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                      Select a preset candidate above or upload your files to run evaluation.
+                    </span>
+                  )}
+                </div>
                 <button
                   type="button"
-                  onClick={handleClearAll}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-black/10 hover:bg-rose-50 hover:border-rose-200 hover:text-rose-600 text-xs font-medium text-black/70 transition-all cursor-pointer self-start md:self-auto"
+                  onClick={() => handleLaunchDebate()}
+                  disabled={isEvaluating}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-9 py-4 rounded-full bg-black text-white text-sm font-semibold hover:bg-neutral-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:scale-105 active:scale-95 cursor-pointer group"
                 >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                  <span>Clear All</span>
+                  {isEvaluating ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin text-white" />
+                      <span>Analyzing & Debating...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Run 4-Persona AI Review & Debate</span>
+                      <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                    </>
+                  )}
                 </button>
+              </div>
+
+              {/* Live Multi-Stage Progress Bar Feedback */}
+              {isEvaluating && (
+                <div className="mt-6 p-5 rounded-2xl bg-zinc-900 text-white shadow-xl space-y-3">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-semibold flex items-center gap-2 text-cyan-300">
+                      <Loader2 className="w-4 h-4 animate-spin text-cyan-400" />
+                      {evaluationStage}
+                    </span>
+                    <span className="font-bold text-white/80">{evaluationProgress}%</span>
+                  </div>
+                  <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
+                    <div
+                      className="bg-gradient-to-r from-cyan-400 via-emerald-400 to-amber-300 h-full rounded-full transition-all duration-300"
+                      style={{ width: `${evaluationProgress}%` }}
+                    />
+                  </div>
+                </div>
               )}
             </div>
-
-            {/* Quick Demo Candidate Presets */}
-            <div className="mb-8 p-4 rounded-2xl bg-zinc-50 border border-black/5">
-              <div className="flex items-center justify-between gap-2 mb-3">
-                <span className="text-xs font-bold uppercase tracking-wider text-black/60 flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                  Quick Load Demo Candidates (1-Click)
-                </span>
-                <span className="text-[11px] text-black/40">Select a preset to auto-fill documents</span>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {SAMPLE_CANDIDATES.map((sample) => {
-                  const isSelected = selectedSampleKey === sample.name;
-                  return (
-                    <button
-                      key={sample.name}
-                      type="button"
-                      onClick={() => handleSelectSample(sample)}
-                      className={`p-3.5 rounded-xl text-left border transition-all cursor-pointer ${
-                        isSelected
-                          ? "bg-white border-black shadow-md ring-2 ring-black/5"
-                          : "bg-white/80 border-black/10 hover:border-black/30 hover:bg-white"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="font-bold text-xs text-[#141414]">{sample.name}</span>
-                        {isSelected && (
-                          <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full flex items-center gap-1">
-                            <CheckCircle2 className="w-3 h-3" /> Active
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-[11px] text-black/60 line-clamp-2 leading-tight">
-                        {sample.jobDescription}
-                      </p>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Candidate Name Input */}
-            <div className="mb-6">
-              <label className="block text-xs font-semibold text-black/70 mb-1.5">
-                Candidate Name <span className="text-black/40 font-normal">(Auto-detected from resume or enter manually)</span>
-              </label>
-              <input
-                type="text"
-                value={candidateName}
-                onChange={(e) => setCandidateName(e.target.value)}
-                placeholder="e.g. Alex Chen (auto-detected from uploaded resume)"
-                className="w-full px-4 py-2.5 rounded-xl border border-black/10 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-black/20"
-              />
-            </div>
-
-            {/* 3 Dedicated PDF / TXT File Upload Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
-              <FileUploadDropzone
-                label="Job Description"
-                description="Target role specification & requirements"
-                icon={Briefcase}
-                fileName={jobDescFileName}
-                extractedText={jobDescription}
-                onFileSelect={(file) => handleFileUpload(file, setJobDescription, setJobDescFileName, false)}
-                onClear={() => {
-                  setJobDescription("");
-                  setJobDescFileName(null);
-                  setSelectedSampleKey(null);
-                }}
-              />
-              <FileUploadDropzone
-                label="Resume / CV"
-                description="Candidate career history, skills & achievements"
-                icon={FileText}
-                fileName={resumeFileName}
-                extractedText={resumeText}
-                required
-                onFileSelect={(file) => handleFileUpload(file, setResumeText, setResumeFileName, true)}
-                onClear={() => {
-                  setResumeText("");
-                  setResumeFileName(null);
-                  setSelectedSampleKey(null);
-                }}
-              />
-              <FileUploadDropzone
-                label="Interview Transcript"
-                description="Raw dialogue & Q&A transcript"
-                icon={Upload}
-                fileName={transcriptFileName}
-                extractedText={transcriptText}
-                required
-                onFileSelect={(file) => handleFileUpload(file, setTranscriptText, setTranscriptFileName, false)}
-                onClear={() => {
-                  setTranscriptText("");
-                  setTranscriptFileName(null);
-                  setSelectedSampleKey(null);
-                }}
-              />
-            </div>
-
-            {/* Action Bar */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-black/5">
-              <div className="text-xs flex items-center gap-1.5">
-                {resumeText.trim() && transcriptText.trim() ? (
-                  <div className="flex items-center gap-1.5 text-emerald-600 font-semibold">
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>Dossier ready ({candidateName || "Candidate"}) — 4 AI Personas configured</span>
-                  </div>
-                ) : (
-                  <span className="text-black/60 flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                    Select a preset candidate above or upload your files to run evaluation.
-                  </span>
-                )}
-              </div>
-              <button
-                type="button"
-                onClick={() => handleLaunchDebate()}
-                disabled={isEvaluating}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-9 py-4 rounded-full bg-black text-white text-sm font-semibold hover:bg-neutral-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:scale-105 active:scale-95 cursor-pointer group"
-              >
-                {isEvaluating ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin text-white" />
-                    <span>Analyzing & Debating...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Run 4-Persona AI Review & Debate</span>
-                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                  </>
-                )}
-              </button>
-            </div>
-
-            {/* Live Multi-Stage Progress Bar Feedback */}
-            {isEvaluating && (
-              <div className="mt-6 p-5 rounded-2xl bg-zinc-900 text-white shadow-xl space-y-3">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold flex items-center gap-2 text-cyan-300">
-                    <Loader2 className="w-4 h-4 animate-spin text-cyan-400" />
-                    {evaluationStage}
-                  </span>
-                  <span className="font-bold text-white/80">{evaluationProgress}%</span>
+          ) : (
+            /* Results View — Rendered In Place with Immediate Visibility */
+            <div className="space-y-6">
+              <div className="flex items-center justify-between p-4 rounded-2xl bg-zinc-50 border border-black/10">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-xs font-bold text-black">Active Evaluation: {evaluationResult.candidate_profile.name}</span>
                 </div>
-                <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
-                  <div
-                    className="bg-gradient-to-r from-cyan-400 via-emerald-400 to-amber-300 h-full rounded-full transition-all duration-300"
-                    style={{ width: `${evaluationProgress}%` }}
-                  />
-                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEvaluationResult(null);
+                    scrollToEvaluation();
+                  }}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-black text-white hover:bg-neutral-800 text-xs font-semibold transition-all cursor-pointer shadow-sm"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>Edit Dossier / Upload Another</span>
+                </button>
               </div>
-            )}
-          </div>
+
+              <EvaluationDashboard
+                result={evaluationResult}
+                defaultTab="agents"
+                onReset={() => {
+                  setEvaluationResult(null);
+                  scrollToEvaluation();
+                }}
+              />
+            </div>
+          )}
         </section>
 
-        {/* Results & Multi-Agent Debate Dashboard Section */}
-        {evaluationResult && (
-          <section id="results" className="relative z-10 py-8 scroll-mt-6">
-            <EvaluationDashboard
-              result={evaluationResult}
-              defaultTab="agents"
-              onReset={() => {
-                setEvaluationResult(null);
-                scrollToEvaluation();
-              }}
-            />
-          </section>
-        )}
 
       </main>
 
