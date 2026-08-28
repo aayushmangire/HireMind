@@ -305,7 +305,7 @@ export default function App() {
           letterSpacing: "-0.03em",
         }}
       >
-        <span className="text-xl md:text-2xl font-bold tracking-tight text-[#141414] select-none">
+        <span className="font-extrabold tracking-tight text-[#141414] select-none text-4xl md:text-5xl" style={{ fontSize: "44px" }}>
           HireMind
         </span>
       </div>

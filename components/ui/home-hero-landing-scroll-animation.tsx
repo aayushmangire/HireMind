@@ -315,39 +315,12 @@ const HomeHeroLandingScrollAnimation: React.FC = () => {
         ref={heroSectionRef}
         className="hero premium-font relative w-screen h-screen px-4 md:px-6 flex flex-col items-center justify-center bg-white text-[#141414] overflow-hidden"
       >
+        {/* Pure White Background at the start of the webpage instead of the changing image carousel */}
         <div
           ref={heroHeaderRef}
-          className="absolute inset-0 w-full h-full will-change-transform"
+          className="absolute inset-0 w-full h-full bg-white will-change-transform"
           style={{ zIndex: 0 }}
-        >
-          <Swiper
-            modules={[Autoplay, EffectFade]}
-            effect="fade"
-            autoplay={{ delay: 3200, disableOnInteraction: false }}
-            loop
-            speed={1200}
-            className="hero-bg-swiper"
-          >
-            {serviceImages.map((src, i) => (
-              <SwiperSlide key={i} style={{ position: "relative", overflow: "hidden" }}>
-                <img
-                  src={src}
-                  alt={`Hero Slide ${i + 1}`}
-                  style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
-                />
-                <div
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    zIndex: 1,
-                    background:
-                      "linear-gradient(to bottom, rgba(255,255,255,0.52) 0%, rgba(255,255,255,0.28) 45%, rgba(255,255,255,0.85) 100%)",
-                  }}
-                />
-              </SwiperSlide>
-            ))}
-          </Swiper>
-        </div>
+        />
 
         {/* Floating "Scroll to start" Prompt — Fades away immediately when user scrolls */}
         <div
