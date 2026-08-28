@@ -1,0 +1,44 @@
+John Smith
+Senior Software Engineer
+
+CONTACT
+Email: john.smith@email.com
+Phone: (555) 123-4567
+
+SUMMARY
+Experienced full-stack software engineer with 6+ years of experience building scalable web applications. Passionate about clean code, system design, and mentoring junior developers. Led migration of monolithic architecture to microservices, resulting in 40% improvement in deployment frequency.
+
+TECHNICAL SKILLS
+Languages: Python, JavaScript/TypeScript, Go, SQL
+Frameworks: React, Next.js, FastAPI, Django, Node.js
+Infrastructure: AWS (EC2, Lambda, S3, RDS), Docker, Kubernetes, Terraform
+Databases: PostgreSQL, MongoDB, Redis, DynamoDB
+Tools: Git, GitHub Actions, Jenkins, Datadog, Grafana
+
+EXPERIENCE
+
+Senior Software Engineer | TechCorp Inc. | 2021 - Present
+- Led a team of 12 engineers in redesigning the payment processing platform
+- Migrated monolithic application to 15 microservices using Python and Go
+- Reduced API latency by 60% through caching strategies and query optimization
+- Implemented CI/CD pipelines reducing deployment time from 2 hours to 15 minutes
+- Mentored 4 junior engineers, 2 of whom were promoted within 18 months
+
+Software Engineer | StartupXYZ | 2019 - 2021
+- Built real-time analytics dashboard processing 50M+ events daily
+- Designed and implemented RESTful APIs serving 10K+ requests per second
+- Introduced automated testing, increasing code coverage from 30% to 85%
+- Collaborated with product team to define technical requirements for 3 major features
+
+Junior Developer | WebAgency Co. | 2018 - 2019
+- Developed responsive web applications using React and Node.js
+- Participated in code reviews and adopted best practices for version control
+- Fixed 200+ bugs and improved page load times by 35%
+
+EDUCATION
+B.S. Computer Science | State University | 2018
+GPA: 3.7/4.0 | Dean's List
+
+CERTIFICATIONS
+AWS Solutions Architect - Associate (2022)
+Kubernetes Administrator (CKA) (2023)

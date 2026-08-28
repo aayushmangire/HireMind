@@ -1,0 +1,50 @@
+INTERVIEW TRANSCRIPT - John Smith
+Position: Senior Software Engineer
+Date: August 15, 2024
+Interviewer: Sarah Chen (Engineering Manager)
+
+---
+
+Sarah: Thanks for coming in, John. Let's start — can you tell me about your experience at TechCorp?
+
+John: Sure! I've been at TechCorp for about three years now. The biggest project I worked on was the payment platform migration. When I joined, we had this massive monolithic Python application that was really hard to deploy and scale. I proposed breaking it into microservices, and my manager gave me the green light to lead the effort.
+
+Sarah: That sounds like a significant undertaking. How big was the team?
+
+John: I was leading a team of 12 engineers. Well, it started with 8, and we grew to 12 as the project expanded. We split the monolith into about 15 separate services over 18 months.
+
+Sarah: What were the main technical challenges you faced?
+
+John: The biggest challenge was data consistency across services. We moved from a single PostgreSQL database to each service having its own data store. We implemented the saga pattern for distributed transactions, which was new for most of the team. I had to do a lot of research and run proof-of-concepts before we committed to that approach.
+
+Another challenge was observability. With 15 services, debugging issues became much harder. I set up distributed tracing with OpenTelemetry and built custom dashboards in Grafana. That was actually one of the things I'm most proud of — our mean time to resolution dropped from 4 hours to about 45 minutes.
+
+Sarah: Impressive. Can you tell me about a time you disagreed with a team member?
+
+John: Yeah, there was a situation where one of our senior engineers wanted to use a message queue for all inter-service communication. I thought that was overkill for synchronous request-response patterns. We had a pretty heated discussion about it. Eventually, I suggested we do a time-boxed experiment — build one service with the queue approach and one with REST, then compare. The data showed REST was simpler and performed better for our use case, though we did use Kafka for event-driven workflows. The other engineer actually appreciated the data-driven approach.
+
+Sarah: How do you handle mentoring junior engineers?
+
+John: I'm really passionate about mentoring. At TechCorp, I formally mentored 4 junior engineers. Two of them got promoted within 18 months, which I'm really proud of. My approach is to give them increasing responsibility gradually. I start with well-defined tasks, then move to more ambiguous problems. I also do weekly 1-on-1s where we discuss not just work, but career goals.
+
+One thing I've learned is that good mentoring isn't just about teaching technical skills. It's about helping people feel safe to make mistakes and ask questions. I try to create that environment.
+
+Sarah: What about your work at StartupXYZ? You mentioned building an analytics dashboard?
+
+John: Yes, that was a real-time analytics platform. We were processing around 50 million events per day from various sources. I built the ingestion pipeline using Kafka and the processing layer with Python. The dashboard itself was React with WebSocket connections for live updates.
+
+The trickiest part was handling the volume without the infrastructure budget of a large company. We had to be really clever about batching, compression, and pre-aggregating data.
+
+Sarah: What's a project where you felt you could have done better?
+
+John: Honestly, at StartupXYZ, I think I pushed too hard for a microservices architecture when a well-structured monolith would have been sufficient for our scale. We only had 5 engineers, and the operational overhead of managing multiple services was significant. If I could go back, I'd advocate for a modular monolith instead. I learned that architectural decisions should be driven by team size and actual scale, not just technical preferences.
+
+Sarah: That's a really mature reflection. Last question — why are you looking to leave TechCorp?
+
+John: I love the team, but I feel like I've hit a ceiling in terms of technical challenges. The migration project is winding down, and the role is becoming more maintenance-focused. I'm looking for a place where I can work on greenfield projects and have more influence on architectural decisions from the start.
+
+Sarah: Great, thank you John. Do you have any questions for me?
+
+John: Yes, I'd love to hear about the team structure and what technical challenges you're facing currently.
+
+[Interview continues with Sarah describing the role...]

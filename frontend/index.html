@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="PromptWars — AI-powered candidate evaluation using 4 independent agents, structured debate, and weighted adjudication.">
+    <title>PromptWars — Multi-Agent Candidate Evaluation</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚔️</text></svg>">
+</head>
+<body>
+    <div class="bg-animated"></div>
+
+    <div class="app-container" id="app">
+        <!-- ═══ LANDING / UPLOAD VIEW ═══ -->
+        <div id="view-landing">
+            <div class="hero">
+                <h1>⚔️ PromptWars</h1>
+                <p class="subtitle">
+                    Upload a resume and interview transcript. Four AI agents will independently evaluate the candidate,
+                    debate each other's conclusions, and produce a weighted hiring recommendation.
+                </p>
+                <div class="features-row">
+                    <div class="feature-chip"><span class="icon">🔧</span> Technical Depth</div>
+                    <div class="feature-chip"><span class="icon">🤝</span> Culture & Communication</div>
+                    <div class="feature-chip"><span class="icon">📋</span> Hiring Decision</div>
+                    <div class="feature-chip"><span class="icon">🔍</span> Skeptic Analysis</div>
+                    <div class="feature-chip"><span class="icon">🗣️</span> Voice Debate</div>
+                </div>
+            </div>
+
+            <!-- Settings / Provider Bar -->
+            <div class="glass-card settings-card mb-lg">
+                <div class="settings-header">
+                    <div class="settings-title">⚙️ Execution Settings</div>
+                    <div class="mode-toggles">
+                        <button type="button" class="mode-btn active" id="btn-mode-demo" onclick="setExecutionMode('demo')">
+                            ⚡ Demo Simulation
+                        </button>
+                        <button type="button" class="mode-btn" id="btn-mode-live" onclick="setExecutionMode('live')">
+                            🧠 Live LLM API
+                        </button>
+                    </div>
+                </div>
+
+                <div class="settings-body hidden" id="live-settings-body">
+                    <div class="settings-grid">
+                        <div class="form-group">
+                            <label for="select-provider">Provider</label>
+                            <select id="select-provider" class="form-control" onchange="onProviderChange(this.value)">
+                                <option value="gemini/gemini-2.0-flash">Google Gemini (gemini-2.0-flash)</option>
+                                <option value="openai/gpt-4o">OpenAI (gpt-4o)</option>
+                                <option value="anthropic/claude-3-5-sonnet">Anthropic (claude-3-5-sonnet)</option>
+                                <option value="groq/llama-3.3-70b-versatile">Groq (llama-3.3-70b)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="input-api-key">API Key <span class="upload-hint" style="margin:0;">(or set in backend/.env)</span></label>
+                            <input type="password" id="input-api-key" class="form-control" placeholder="AIzaSy... or sk-..." oninput="saveApiKey(this.value)">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="upload-section">
+                <div class="upload-zone" id="upload-resume">
+                    <input type="file" id="file-resume" accept=".pdf,.docx,.txt">
+                    <div class="upload-icon">📄</div>
+                    <div class="upload-label">Resume</div>
+                    <div class="upload-hint">PDF, DOCX, or TXT</div>
+                    <div class="file-name hidden" id="resume-name"></div>
+                </div>
+                <div class="upload-zone" id="upload-transcript">
+                    <input type="file" id="file-transcript" accept=".pdf,.docx,.txt">
+                    <div class="upload-icon">🎙️</div>
+                    <div class="upload-label">Interview Transcript</div>
+                    <div class="upload-hint">PDF, DOCX, or TXT</div>
+                    <div class="file-name hidden" id="transcript-name"></div>
+                </div>
+            </div>
+
+            <div class="text-center">
+                <div class="btn-group-center">
+                    <button class="btn btn-secondary" id="btn-load-sample" onclick="loadSampleFiles()">
+                        📂 Load Sample Candidate
+                    </button>
+                    <button class="btn btn-primary" id="btn-evaluate" disabled>
+                        🚀 Start Evaluation
+                    </button>
+                </div>
+                <p class="upload-hint mt-md" id="upload-status">Upload files or click "Load Sample Candidate"</p>
+            </div>
+        </div>
+
+        <!-- ═══ EVALUATION VIEW ═══ -->
+        <div id="view-evaluation" class="hidden">
+            <!-- Stepper -->
+            <div class="stepper" id="stepper">
+                <div class="step active" data-step="1">
+                    <div class="step-number">1</div>
+                    <div class="step-label">Profile</div>
+                </div>
+                <div class="step-connector" data-connector="1"></div>
+                <div class="step" data-step="2">
+                    <div class="step-number">2</div>
+                    <div class="step-label">Agents</div>
+                </div>
+                <div class="step-connector" data-connector="2"></div>
+                <div class="step" data-step="3">
+                    <div class="step-number">3</div>
+                    <div class="step-label">Debate</div>
+                </div>
+                <div class="step-connector" data-connector="3"></div>
+                <div class="step" data-step="4">
+                    <div class="step-number">4</div>
+                    <div class="step-label">Decision</div>
+                </div>
+            </div>
+
+            <!-- Step Content Area -->
+            <div id="step-content">
+                <!-- Populated dynamically by JS -->
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
