@@ -88,12 +88,19 @@ function getPersonaVoice(name: string) {
   return PERSONA_VOICES['Hiring Manager'] || PERSONA_VOICES['Technical Evaluator'];
 }
 
-export default function EvaluationDashboard({ result, onReset, defaultTab = 'debate' }: EvaluationDashboardProps) {
-  // Tabs: 1. Facts/Info -> 2. Personas -> 3. Debate -> 4. Decision (defaulting to 'debate' for immediate AI discussion view)
+export default function EvaluationDashboard({ result, onReset, defaultTab = 'agents' }: EvaluationDashboardProps) {
+  // Tabs: 1. Facts/Info -> 2. Personas -> 3. Debate -> 4. Decision
   const [activeTab, setActiveTab] = useState<'profile' | 'agents' | 'debate' | 'decision'>(defaultTab);
-  const [selectedAgentIndex, setSelectedAgentIndex] = useState(0);
-  const [activeRound, setActiveRound] = useState(1);
+  const [viewMode, setViewMode] = useState<'tabbed' | 'all'>('tabbed');
+  const [selectedAgentIndex, setSelectedAgentIndex] = useState<number>(0);
+  const [activeRound, setActiveRound] = useState<number>(1);
 
+  // Sync tab when defaultTab prop changes
+  useEffect(() => {
+    if (defaultTab) {
+      setActiveTab(defaultTab);
+    }
+  }, [defaultTab]);
 
   // ElevenLabs Voice State
   const [isPlayingVoice, setIsPlayingVoice] = useState(false);
@@ -103,6 +110,7 @@ export default function EvaluationDashboard({ result, onReset, defaultTab = 'deb
   
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
   const synthRef = useRef<SpeechSynthesis | null>(null);
+
 
   // Flatten all debate messages across rounds safely
   const allDebateMessages = (result.debate_rounds || []).flatMap((round) =>
@@ -275,98 +283,129 @@ export default function EvaluationDashboard({ result, onReset, defaultTab = 'deb
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
+            <div className="inline-flex items-center p-1 bg-zinc-100 rounded-full border border-black/5 text-xs font-semibold">
+              <button
+                type="button"
+                onClick={() => setViewMode('tabbed')}
+                className={`px-3.5 py-1.5 rounded-full transition-all cursor-pointer ${
+                  viewMode === 'tabbed' ? 'bg-black text-white shadow-xs' : 'text-zinc-600 hover:text-black'
+                }`}
+              >
+                Tabbed View
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('all')}
+                className={`px-3.5 py-1.5 rounded-full transition-all cursor-pointer ${
+                  viewMode === 'all' ? 'bg-black text-white shadow-xs' : 'text-zinc-600 hover:text-black'
+                }`}
+              >
+                📜 Expand All 4 Sections
+              </button>
+            </div>
+
             <button
               type="button"
               onClick={onReset}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full border border-black/10 bg-white hover:bg-black/5 text-xs font-medium text-black transition-all cursor-pointer shadow-sm"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-black/10 bg-white hover:bg-black/5 text-xs font-medium text-black transition-all cursor-pointer shadow-sm"
             >
               <RotateCcw className="w-3.5 h-3.5" />
-              Evaluate Another Candidate
+              <span>Reset</span>
             </button>
           </div>
         </div>
       </div>
 
-      {/* Navigation Tabs (Ordered: 1. Facts & Info -> 2. 4 Independent Personas -> 3. Live Debate & Voice -> 4. Final Decision Report) */}
-      <div
-        role="tablist"
-        aria-label="Candidate Evaluation Sections"
-        className="flex items-center justify-start gap-2 overflow-x-auto pb-4 mb-6 border-b border-black/5 scrollbar-none"
-      >
-        <button
-          type="button"
-          role="tab"
-          id="tab-profile"
-          aria-selected={activeTab === 'profile'}
-          aria-controls="panel-profile"
-          onClick={() => setActiveTab('profile')}
-          className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-semibold transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-black focus-visible:outline-none ${
-            activeTab === 'profile'
-              ? 'bg-black text-white shadow-md'
-              : 'bg-white text-zinc-700 border border-black/10 hover:bg-black/5'
-          }`}
+      {/* Navigation Tabs — Displayed in Tabbed Mode */}
+      {viewMode === 'tabbed' && (
+        <div
+          role="tablist"
+          aria-label="Candidate Evaluation Sections"
+          className="flex items-center justify-start gap-2 overflow-x-auto pb-4 mb-6 border-b border-black/5 scrollbar-none"
         >
-          <FileText className="w-4 h-4" aria-hidden="true" />
-          1. Facts & Info About Candidate
-        </button>
+          <button
+            type="button"
+            role="tab"
+            id="tab-profile"
+            aria-selected={activeTab === 'profile'}
+            aria-controls="panel-profile"
+            onClick={() => setActiveTab('profile')}
+            className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-semibold transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-black focus-visible:outline-none ${
+              activeTab === 'profile'
+                ? 'bg-black text-white shadow-md'
+                : 'bg-white text-zinc-700 border border-black/10 hover:bg-black/5'
+            }`}
+          >
+            <FileText className="w-4 h-4" aria-hidden="true" />
+            1. Facts & Candidate Info
+          </button>
 
-        <button
-          type="button"
-          role="tab"
-          id="tab-agents"
-          aria-selected={activeTab === 'agents'}
-          aria-controls="panel-agents"
-          onClick={() => setActiveTab('agents')}
-          className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-semibold transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-black focus-visible:outline-none ${
-            activeTab === 'agents'
-              ? 'bg-black text-white shadow-md'
-              : 'bg-white text-zinc-700 border border-black/10 hover:bg-black/5'
-          }`}
-        >
-          <UserCheck className="w-4 h-4" aria-hidden="true" />
-          2. 4 Independent Personas
-        </button>
+          <button
+            type="button"
+            role="tab"
+            id="tab-agents"
+            aria-selected={activeTab === 'agents'}
+            aria-controls="panel-agents"
+            onClick={() => setActiveTab('agents')}
+            className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-semibold transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-black focus-visible:outline-none ${
+              activeTab === 'agents'
+                ? 'bg-black text-white shadow-md'
+                : 'bg-white text-zinc-700 border border-black/10 hover:bg-black/5'
+            }`}
+          >
+            <UserCheck className="w-4 h-4" aria-hidden="true" />
+            2. 4 Independent Personas
+          </button>
 
-        <button
-          type="button"
-          role="tab"
-          id="tab-debate"
-          aria-selected={activeTab === 'debate'}
-          aria-controls="panel-debate"
-          onClick={() => setActiveTab('debate')}
-          className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-semibold transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-black focus-visible:outline-none ${
-            activeTab === 'debate'
-              ? 'bg-black text-white shadow-md'
-              : 'bg-white text-zinc-700 border border-black/10 hover:bg-black/5'
-          }`}
-        >
-          <MessageSquare className="w-4 h-4" aria-hidden="true" />
-          3. Live Debate & Voice Session
-        </button>
+          <button
+            type="button"
+            role="tab"
+            id="tab-debate"
+            aria-selected={activeTab === 'debate'}
+            aria-controls="panel-debate"
+            onClick={() => setActiveTab('debate')}
+            className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-semibold transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-black focus-visible:outline-none ${
+              activeTab === 'debate'
+                ? 'bg-black text-white shadow-md'
+                : 'bg-white text-zinc-700 border border-black/10 hover:bg-black/5'
+            }`}
+          >
+            <MessageSquare className="w-4 h-4" aria-hidden="true" />
+            3. Live Debate & Voice
+          </button>
 
-        <button
-          type="button"
-          role="tab"
-          id="tab-decision"
-          aria-selected={activeTab === 'decision'}
-          aria-controls="panel-decision"
-          onClick={() => setActiveTab('decision')}
-          className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-semibold transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-black focus-visible:outline-none ${
-            activeTab === 'decision'
-              ? 'bg-black text-white shadow-md'
-              : 'bg-white text-zinc-700 border border-black/10 hover:bg-black/5'
-          }`}
-        >
-          <Award className="w-4 h-4" aria-hidden="true" />
-          4. Final Decision Report
-        </button>
-      </div>
+          <button
+            type="button"
+            role="tab"
+            id="tab-decision"
+            aria-selected={activeTab === 'decision'}
+            aria-controls="panel-decision"
+            onClick={() => setActiveTab('decision')}
+            className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-semibold transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-black focus-visible:outline-none ${
+              activeTab === 'decision'
+                ? 'bg-black text-white shadow-md'
+                : 'bg-white text-zinc-700 border border-black/10 hover:bg-black/5'
+            }`}
+          >
+            <Award className="w-4 h-4" aria-hidden="true" />
+            4. Final Decision Report
+          </button>
+        </div>
+      )}
+
 
       {/* ─────────────────────────────────────────────────────────────
           SECTION 1: THE FACTS & INFO ABOUT CANDIDATE (Profile Builder)
          ───────────────────────────────────────────────────────────── */}
-      {activeTab === 'profile' && (
-        <div id="panel-profile" role="tabpanel" aria-labelledby="tab-profile" className="space-y-6">
+      {(viewMode === 'all' || activeTab === 'profile') && (
+        <div id="panel-profile" role="tabpanel" aria-labelledby="tab-profile" className="space-y-6 mb-12">
+          {viewMode === 'all' && (
+            <div className="flex items-center gap-2 pb-2 border-b border-black/10">
+              <FileText className="w-5 h-5 text-black" />
+              <h3 className="text-lg font-bold">1. Verified Candidate Profile & Claims</h3>
+            </div>
+          )}
+
           {/* Candidate Bio Header */}
           <div className="p-6 md:p-8 rounded-3xl bg-white border border-black/10 shadow-sm">
             <div className="flex items-center gap-3 mb-2">
@@ -454,17 +493,19 @@ export default function EvaluationDashboard({ result, onReset, defaultTab = 'deb
             </div>
           </div>
 
-          {/* Tab Navigation Footer */}
-          <div className="pt-6 border-t border-black/5 flex justify-end">
-            <button
-              type="button"
-              onClick={() => setActiveTab('agents')}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-black text-white text-xs font-bold hover:bg-neutral-800 transition-all cursor-pointer shadow-sm"
-            >
-              <span>Next: 2. View 4 Persona Reviews</span>
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
+          {/* Tab Navigation Footer (in Tabbed Mode) */}
+          {viewMode === 'tabbed' && (
+            <div className="pt-6 border-t border-black/5 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setActiveTab('agents')}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-black text-white text-xs font-bold hover:bg-neutral-800 transition-all cursor-pointer shadow-sm"
+              >
+                <span>Next: 2. View 4 Persona Reviews</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -472,13 +513,20 @@ export default function EvaluationDashboard({ result, onReset, defaultTab = 'deb
       {/* ─────────────────────────────────────────────────────────────
           SECTION 2: 4 INDEPENDENT PERSONAS (Pre-Debate Isolated Verdicts)
          ───────────────────────────────────────────────────────────── */}
-      {activeTab === 'agents' && (
-        <div className="space-y-6">
+      {(viewMode === 'all' || activeTab === 'agents') && (
+        <div id="panel-agents" role="tabpanel" aria-labelledby="tab-agents" className="space-y-6 mb-12">
+          {viewMode === 'all' && (
+            <div className="flex items-center gap-2 pb-2 border-b border-black/10">
+              <UserCheck className="w-5 h-5 text-black" />
+              <h3 className="text-lg font-bold">2. 4 Independent Persona Evaluations</h3>
+            </div>
+          )}
+
           {/* Rule Banner */}
           <div className="p-4 rounded-2xl bg-blue-50 border border-blue-100 flex items-center gap-3">
             <Sparkles className="w-5 h-5 text-blue-600 flex-shrink-0" />
             <p className="text-xs text-blue-900 leading-relaxed">
-              <strong>Isolated Analysis Phase:</strong> Each of the 4 agents evaluated the candidate independently without seeing peer conclusions. All opinions cite real transcript & resume quotes.
+              <strong>Isolated Analysis Phase:</strong> All 4 agents evaluated the candidate independently without seeing peer conclusions. Click each agent to inspect their full isolated report.
             </p>
           </div>
 
@@ -491,6 +539,7 @@ export default function EvaluationDashboard({ result, onReset, defaultTab = 'deb
               const Icon = config.icon;
               const isSelected = selectedAgentIndex === index;
               const scoreVal = agent.score != null ? (agent.score > 10 ? Math.round(agent.score) : Math.round(agent.score * 10)) : 88;
+              const rec = formatRecommendation(agent.recommendation || agent.verdict || 'HIRE');
 
               return (
                 <button
@@ -499,8 +548,8 @@ export default function EvaluationDashboard({ result, onReset, defaultTab = 'deb
                   onClick={() => setSelectedAgentIndex(index)}
                   className={`p-4 rounded-2xl text-left transition-all cursor-pointer border ${
                     isSelected
-                      ? `bg-white ${config.border} shadow-md ring-2 ring-black/5`
-                      : 'bg-white/80 border-black/5 hover:bg-white'
+                      ? `bg-white ${config.border} shadow-md ring-2 ring-black/10`
+                      : 'bg-white/80 border-black/10 hover:bg-white hover:border-black/20'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-2">
@@ -510,10 +559,14 @@ export default function EvaluationDashboard({ result, onReset, defaultTab = 'deb
                     <span className="text-base font-bold">{scoreVal}</span>
                   </div>
                   <h5 className="font-semibold text-xs truncate">{agentName}</h5>
-                  <p className="text-[11px] text-black/50 truncate flex items-center gap-1 mt-0.5">
-                    <Radio className="w-3 h-3 text-cyan-600" />
-                    <span>Voice: {voiceInfo?.name || 'Voice'} ({voiceInfo?.gender || 'AI'})</span>
-                  </p>
+                  <div className="mt-1 flex items-center justify-between">
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${rec.color}`}>
+                      {rec.label}
+                    </span>
+                    <span className="text-[10px] text-cyan-700 font-medium">
+                      {voiceInfo?.name}
+                    </span>
+                  </div>
                 </button>
               );
             })}
@@ -640,33 +693,43 @@ export default function EvaluationDashboard({ result, onReset, defaultTab = 'deb
             );
           })()}
 
-          {/* Tab Navigation Footer */}
-          <div className="pt-6 border-t border-black/5 flex items-center justify-between">
-            <button
-              type="button"
-              onClick={() => setActiveTab('profile')}
-              className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full border border-black/10 hover:bg-black/5 text-xs font-semibold text-black/70 transition-all cursor-pointer"
-            >
-              <span>← 1. Candidate Profile</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('debate')}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-black text-white text-xs font-bold hover:bg-neutral-800 transition-all cursor-pointer shadow-sm"
-            >
-              <span>Next: 3. View Live Debate & Voice</span>
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
+          {/* Tab Navigation Footer (in Tabbed Mode) */}
+          {viewMode === 'tabbed' && (
+            <div className="pt-6 border-t border-black/5 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setActiveTab('profile')}
+                className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full border border-black/10 hover:bg-black/5 text-xs font-semibold text-black/70 transition-all cursor-pointer"
+              >
+                <span>← 1. Candidate Profile</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('debate')}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-black text-white text-xs font-bold hover:bg-neutral-800 transition-all cursor-pointer shadow-sm"
+              >
+                <span>Next: 3. View Live Debate & Voice</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </div>
       )}
+
 
 
       {/* ─────────────────────────────────────────────────────────────
           SECTION 3: LIVE MULTI-ROUND DEBATE & ELEVENLABS AI VOICE SESSION
          ───────────────────────────────────────────────────────────── */}
-      {activeTab === 'debate' && (
-        <div className="space-y-6">
+      {(viewMode === 'all' || activeTab === 'debate') && (
+        <div id="panel-debate" role="tabpanel" aria-labelledby="tab-debate" className="space-y-6 mb-12">
+          {viewMode === 'all' && (
+            <div className="flex items-center gap-2 pb-2 border-b border-black/10">
+              <MessageSquare className="w-5 h-5 text-black" />
+              <h3 className="text-lg font-bold">3. Multi-Agent Live Cross-Examination Debate</h3>
+            </div>
+          )}
+
           {/* ElevenLabs Voice Player Banner */}
           <div className="p-6 md:p-8 rounded-3xl bg-gradient-to-r from-slate-900 via-slate-950 to-black text-white shadow-2xl border border-white/10">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
@@ -840,24 +903,26 @@ export default function EvaluationDashboard({ result, onReset, defaultTab = 'deb
             );
           })()}
 
-          {/* Tab Navigation Footer */}
-          <div className="pt-6 border-t border-black/5 flex items-center justify-between">
-            <button
-              type="button"
-              onClick={() => setActiveTab('agents')}
-              className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full border border-black/10 hover:bg-black/5 text-xs font-semibold text-black/70 transition-all cursor-pointer"
-            >
-              <span>← 2. 4 Persona Reviews</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('decision')}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-black text-white text-xs font-bold hover:bg-neutral-800 transition-all cursor-pointer shadow-sm"
-            >
-              <span>Next: 4. Final Decision Report</span>
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
+          {/* Tab Navigation Footer (in Tabbed Mode) */}
+          {viewMode === 'tabbed' && (
+            <div className="pt-6 border-t border-black/5 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setActiveTab('agents')}
+                className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full border border-black/10 hover:bg-black/5 text-xs font-semibold text-black/70 transition-all cursor-pointer"
+              >
+                <span>← 2. 4 Persona Reviews</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('decision')}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-black text-white text-xs font-bold hover:bg-neutral-800 transition-all cursor-pointer shadow-sm"
+              >
+                <span>Next: 4. Final Decision Report</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -865,9 +930,16 @@ export default function EvaluationDashboard({ result, onReset, defaultTab = 'deb
       {/* ─────────────────────────────────────────────────────────────
           SECTION 4: FINAL DECISION REPORT (Weighted Non-Averaged Adjudication)
          ───────────────────────────────────────────────────────────── */}
-      {activeTab === 'decision' && (
-        <div className="space-y-6">
-          {/* Top KPI Metrics — Displayed only in Final Decision Report */}
+      {(viewMode === 'all' || activeTab === 'decision') && (
+        <div id="panel-decision" role="tabpanel" aria-labelledby="tab-decision" className="space-y-6">
+          {viewMode === 'all' && (
+            <div className="flex items-center gap-2 pb-2 border-b border-black/10">
+              <Award className="w-5 h-5 text-black" />
+              <h3 className="text-lg font-bold">4. Final Decision & Weighted Adjudication</h3>
+            </div>
+          )}
+
+          {/* Top KPI Metrics */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="p-4 rounded-2xl bg-white border border-black/10 shadow-sm">
               <span className="text-xs font-medium text-black/50 block mb-1">Final Verdict</span>
@@ -1015,26 +1087,29 @@ export default function EvaluationDashboard({ result, onReset, defaultTab = 'deb
             </div>
           )}
 
-          {/* Tab Navigation Footer */}
-          <div className="pt-6 border-t border-black/5 flex items-center justify-between">
-            <button
-              type="button"
-              onClick={() => setActiveTab('debate')}
-              className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full border border-black/10 hover:bg-black/5 text-xs font-semibold text-black/70 transition-all cursor-pointer"
-            >
-              <span>← 3. Live Debate & Voice</span>
-            </button>
-            <button
-              type="button"
-              onClick={onReset}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-black text-white text-xs font-bold hover:bg-neutral-800 transition-all cursor-pointer shadow-sm"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span>Evaluate Another Candidate</span>
-            </button>
-          </div>
+          {/* Tab Navigation Footer (in Tabbed Mode) */}
+          {viewMode === 'tabbed' && (
+            <div className="pt-6 border-t border-black/5 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => setActiveTab('debate')}
+                className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full border border-black/10 hover:bg-black/5 text-xs font-semibold text-black/70 transition-all cursor-pointer"
+              >
+                <span>← 3. Live Debate & Voice</span>
+              </button>
+              <button
+                type="button"
+                onClick={onReset}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-black text-white text-xs font-bold hover:bg-neutral-800 transition-all cursor-pointer shadow-sm"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Evaluate Another Candidate</span>
+              </button>
+            </div>
+          )}
         </div>
       )}
+
     </div>
   );
 }
