@@ -331,21 +331,21 @@ export default function App() {
     setEvaluationResult(null);
 
     // Multi-stage animated simulation
-    setEvaluationProgress(20);
+    setEvaluationProgress(25);
     setEvaluationStage("Extracting candidate profile, claims & verified skills...");
-    await new Promise((r) => setTimeout(r, 300));
+    await new Promise((r) => setTimeout(r, 120));
 
-    setEvaluationProgress(48);
+    setEvaluationProgress(50);
     setEvaluationStage("Dispatching 4 Independent AI Personas (Technical, Culture, Hiring Manager, Skeptic)...");
-    await new Promise((r) => setTimeout(r, 350));
+    await new Promise((r) => setTimeout(r, 120));
 
-    setEvaluationProgress(76);
+    setEvaluationProgress(75);
     setEvaluationStage("Initiating 2-Round Cross-Examination Multi-Agent Debate & Rebuttals...");
-    await new Promise((r) => setTimeout(r, 350));
+    await new Promise((r) => setTimeout(r, 120));
 
     setEvaluationProgress(95);
     setEvaluationStage("Synthesizing Weighted Non-Averaged Adjudication & Final Report...");
-    await new Promise((r) => setTimeout(r, 300));
+    await new Promise((r) => setTimeout(r, 120));
 
     try {
       const result = await runCandidateEvaluation(
@@ -359,7 +359,7 @@ export default function App() {
 
       setEvaluationProgress(100);
       setEvaluationStage("Debate Complete! Rendering 4 AI Debate Dashboard...");
-      await new Promise((r) => setTimeout(r, 150));
+      await new Promise((r) => setTimeout(r, 80));
 
       setEvaluationResult(result);
       setIsEvaluating(false);
@@ -374,6 +374,7 @@ export default function App() {
       console.error("Evaluation execution error:", err);
       setIsEvaluating(false);
     }
+
   };
 
 

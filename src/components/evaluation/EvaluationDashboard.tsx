@@ -91,9 +91,10 @@ function getPersonaVoice(name: string) {
 export default function EvaluationDashboard({ result, onReset, defaultTab = 'agents' }: EvaluationDashboardProps) {
   // Tabs: 1. Facts/Info -> 2. Personas -> 3. Debate -> 4. Decision
   const [activeTab, setActiveTab] = useState<'profile' | 'agents' | 'debate' | 'decision'>(defaultTab);
-  const [viewMode, setViewMode] = useState<'tabbed' | 'all'>('tabbed');
+  const [viewMode, setViewMode] = useState<'tabbed' | 'all'>('all');
   const [selectedAgentIndex, setSelectedAgentIndex] = useState<number>(0);
   const [activeRound, setActiveRound] = useState<number>(1);
+
 
   // Sync tab when defaultTab prop changes
   useEffect(() => {
