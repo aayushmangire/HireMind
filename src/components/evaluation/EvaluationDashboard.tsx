@@ -453,8 +453,21 @@ export default function EvaluationDashboard({ result, onReset, defaultTab = 'deb
               ))}
             </div>
           </div>
+
+          {/* Tab Navigation Footer */}
+          <div className="pt-6 border-t border-black/5 flex justify-end">
+            <button
+              type="button"
+              onClick={() => setActiveTab('agents')}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-black text-white text-xs font-bold hover:bg-neutral-800 transition-all cursor-pointer shadow-sm"
+            >
+              <span>Next: 2. View 4 Persona Reviews</span>
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       )}
+
 
       {/* ─────────────────────────────────────────────────────────────
           SECTION 2: 4 INDEPENDENT PERSONAS (Pre-Debate Isolated Verdicts)
@@ -626,8 +639,28 @@ export default function EvaluationDashboard({ result, onReset, defaultTab = 'deb
               </div>
             );
           })()}
+
+          {/* Tab Navigation Footer */}
+          <div className="pt-6 border-t border-black/5 flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => setActiveTab('profile')}
+              className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full border border-black/10 hover:bg-black/5 text-xs font-semibold text-black/70 transition-all cursor-pointer"
+            >
+              <span>← 1. Candidate Profile</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('debate')}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-black text-white text-xs font-bold hover:bg-neutral-800 transition-all cursor-pointer shadow-sm"
+            >
+              <span>Next: 3. View Live Debate & Voice</span>
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       )}
+
 
       {/* ─────────────────────────────────────────────────────────────
           SECTION 3: LIVE MULTI-ROUND DEBATE & ELEVENLABS AI VOICE SESSION
@@ -806,8 +839,28 @@ export default function EvaluationDashboard({ result, onReset, defaultTab = 'deb
               </div>
             );
           })()}
+
+          {/* Tab Navigation Footer */}
+          <div className="pt-6 border-t border-black/5 flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => setActiveTab('agents')}
+              className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full border border-black/10 hover:bg-black/5 text-xs font-semibold text-black/70 transition-all cursor-pointer"
+            >
+              <span>← 2. 4 Persona Reviews</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('decision')}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-black text-white text-xs font-bold hover:bg-neutral-800 transition-all cursor-pointer shadow-sm"
+            >
+              <span>Next: 4. Final Decision Report</span>
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       )}
+
 
       {/* ─────────────────────────────────────────────────────────────
           SECTION 4: FINAL DECISION REPORT (Weighted Non-Averaged Adjudication)
@@ -961,8 +1014,28 @@ export default function EvaluationDashboard({ result, onReset, defaultTab = 'deb
               </div>
             </div>
           )}
+
+          {/* Tab Navigation Footer */}
+          <div className="pt-6 border-t border-black/5 flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => setActiveTab('debate')}
+              className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full border border-black/10 hover:bg-black/5 text-xs font-semibold text-black/70 transition-all cursor-pointer"
+            >
+              <span>← 3. Live Debate & Voice</span>
+            </button>
+            <button
+              type="button"
+              onClick={onReset}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-black text-white text-xs font-bold hover:bg-neutral-800 transition-all cursor-pointer shadow-sm"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Evaluate Another Candidate</span>
+            </button>
+          </div>
         </div>
       )}
     </div>
   );
 }
+

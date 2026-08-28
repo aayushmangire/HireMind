@@ -470,28 +470,20 @@ export default function App() {
             </div>
           </div>
 
-          {/* "Start Candidate Evaluation" CTA Buttons — Positioned below the 4 AI Agents */}
-          <div className="mt-14 flex flex-col sm:flex-row items-center justify-center gap-4 text-center">
+          {/* "Start Candidate Evaluation" CTA Button — Positioned below the 4 AI Agents */}
+          <div className="mt-14 flex flex-col items-center justify-center text-center">
             <button
               type="button"
               onClick={scrollToEvaluation}
-              className="inline-flex items-center gap-3 px-8 py-4 rounded-full bg-black text-white text-sm md:text-base font-semibold tracking-tight shadow-xl hover:bg-neutral-800 hover:scale-105 active:scale-95 transition-all cursor-pointer group"
+              className="inline-flex items-center gap-3 px-9 py-4 rounded-full bg-black text-white text-sm md:text-base font-semibold tracking-tight shadow-xl hover:bg-neutral-800 hover:scale-105 active:scale-95 transition-all cursor-pointer group"
             >
-              <span>Upload Custom Candidate</span>
+              <span>Start Candidate Evaluation</span>
               <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
             </button>
-            <button
-              type="button"
-              onClick={() => handleLaunchDebate(SAMPLE_CANDIDATES[0])}
-              className="inline-flex items-center gap-2 px-7 py-4 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-sm md:text-base font-semibold tracking-tight shadow-xl hover:scale-105 active:scale-95 transition-all cursor-pointer group"
-            >
-              <Zap className="w-4 h-4 fill-current text-yellow-300" />
-              <span>⚡ Instant 4 AI Debate (Alex Chen)</span>
-            </button>
+            <p className="mt-3.5 text-xs text-black/50">
+              Upload resume and interview transcript files (.PDF / .TXT) or select a sample candidate below.
+            </p>
           </div>
-          <p className="mt-3.5 text-xs text-center text-black/50">
-            Upload resume and interview transcript files (.PDF / .TXT) or click instant demo to launch the 4 AI debate.
-          </p>
         </section>
 
         {/* Candidate Evaluation & Upload Section */}
@@ -624,12 +616,12 @@ export default function App() {
                 {resumeText.trim() && transcriptText.trim() ? (
                   <div className="flex items-center gap-1.5 text-emerald-600 font-semibold">
                     <CheckCircle2 className="w-4 h-4" />
-                    <span>Dossier ready ({candidateName || "Candidate"}) — 4-Agent Debate configured</span>
+                    <span>Dossier ready ({candidateName || "Candidate"}) — 4 AI Personas configured</span>
                   </div>
                 ) : (
                   <span className="text-black/60 flex items-center gap-1.5">
                     <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                    Tip: Click a preset candidate above, or upload documents to start.
+                    Select a preset candidate above or upload your files to run evaluation.
                   </span>
                 )}
               </div>
@@ -644,15 +636,10 @@ export default function App() {
                     <Loader2 className="w-4 h-4 animate-spin text-white" />
                     <span>Analyzing & Debating...</span>
                   </>
-                ) : resumeText.trim() && transcriptText.trim() ? (
-                  <>
-                    <span>Launch 4 AI Discussion & Debate</span>
-                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                  </>
                 ) : (
                   <>
-                    <Zap className="w-4 h-4 fill-current text-yellow-300" />
-                    <span>Launch 4 AI Discussion (with Sample)</span>
+                    <span>Run 4-Persona AI Review & Debate</span>
+                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
                   </>
                 )}
               </button>
@@ -679,12 +666,12 @@ export default function App() {
           </div>
         </section>
 
-
         {/* Results & Multi-Agent Debate Dashboard Section */}
         {evaluationResult && (
-          <section id="results" className="relative z-10 py-8">
+          <section id="results" className="relative z-10 py-8 scroll-mt-6">
             <EvaluationDashboard
               result={evaluationResult}
+              defaultTab="agents"
               onReset={() => {
                 setEvaluationResult(null);
                 scrollToEvaluation();
@@ -692,6 +679,7 @@ export default function App() {
             />
           </section>
         )}
+
       </main>
 
       {/* Footer */}
