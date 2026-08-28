@@ -1,18 +1,49 @@
 import * as pdfjsLib from 'pdfjs-dist';
 
+// Security: Max allowed upload size (25MB) to protect against memory exhaustion
+const MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024;
+
 // Set up PDF.js worker
 if (typeof window !== 'undefined') {
   pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 }
 
 /**
+ * Sanitizes extracted raw text from documents to strip dangerous control characters,
+ * null bytes, and non-printable binary artifacts while preserving document structure.
+ */
+export function sanitizeDocumentText(rawText: string): string {
+  if (!rawText) return '';
+  return rawText
+    // Remove null bytes and non-printable control chars (except standard \t, \n, \r)
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
+    // Normalize unicode line separators
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
+    // Remove excessive consecutive empty lines
+    .replace(/\n{4,}/g, '\n\n\n')
+    .trim();
+}
+
+/**
  * Extracts plain text from a File object (supports .pdf and .txt).
+ * Includes security file size validation and safe fallback decoding.
  */
 export async function extractTextFromFile(file: File): Promise<string> {
+  if (!file) {
+    throw new Error('No file provided for text extraction.');
+  }
+
+  // Security guard: Check file size limit
+  if (file.size > MAX_FILE_SIZE_BYTES) {
+    throw new Error(`File size (${(file.size / (1024 * 1024)).toFixed(1)}MB) exceeds maximum allowed limit of 25MB.`);
+  }
+
   const fileType = file.name.split('.').pop()?.toLowerCase() || '';
 
   if (fileType === 'txt') {
-    return await file.text();
+    const raw = await file.text();
+    return sanitizeDocumentText(raw);
   }
 
   if (fileType === 'pdf') {
@@ -26,32 +57,34 @@ export async function extractTextFromFile(file: File): Promise<string> {
         const page = await pdf.getPage(i);
         const textContent = await page.getTextContent();
         const pageText = textContent.items
-          .map((item: any) => item.str || '')
+          .map((item: any) => (typeof item === 'object' && item && 'str' in item ? String(item.str) : ''))
+          .filter(Boolean)
           .join(' ');
         fullText += (i > 1 ? '\n\n' : '') + pageText;
       }
 
       if (fullText.trim().length > 0) {
-        return fullText.trim();
+        return sanitizeDocumentText(fullText);
       }
     } catch (pdfErr) {
-      console.warn('PDF parsing with pdfjs-dist failed, attempting raw text extraction:', pdfErr);
+      console.warn('PDF parsing with pdfjs-dist encountered an issue, trying safe stream fallback:', pdfErr);
     }
 
-    // Fallback text extraction for PDF text streams
+    // Safe fallback text extraction for PDF text streams
     try {
       const text = await file.text();
       const clean = text.replace(/[^\x20-\x7E\n\r\t]/g, ' ').replace(/\s+/g, ' ');
       if (clean.length > 50) {
-        return clean;
+        return sanitizeDocumentText(clean);
       }
     } catch (e) {
       console.warn('Fallback stream text extraction failed:', e);
     }
   }
 
-  // Generic text reader
-  return await file.text();
+  // Generic safe text reader
+  const genericText = await file.text();
+  return sanitizeDocumentText(genericText);
 }
 
 /**

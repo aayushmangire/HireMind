@@ -285,63 +285,85 @@ export default function EvaluationDashboard({ result, onReset }: EvaluationDashb
       </div>
 
       {/* Navigation Tabs (Ordered: 1. Facts & Info -> 2. 4 Independent Personas -> 3. Live Debate & Voice -> 4. Final Decision Report) */}
-      <div className="flex items-center justify-start gap-2 overflow-x-auto pb-4 mb-6 border-b border-black/5 scrollbar-none">
+      <div
+        role="tablist"
+        aria-label="Candidate Evaluation Sections"
+        className="flex items-center justify-start gap-2 overflow-x-auto pb-4 mb-6 border-b border-black/5 scrollbar-none"
+      >
         <button
           type="button"
+          role="tab"
+          id="tab-profile"
+          aria-selected={activeTab === 'profile'}
+          aria-controls="panel-profile"
           onClick={() => setActiveTab('profile')}
-          className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+          className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-semibold transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-black focus-visible:outline-none ${
             activeTab === 'profile'
               ? 'bg-black text-white shadow-md'
-              : 'bg-white text-black/70 border border-black/10 hover:bg-black/5'
+              : 'bg-white text-zinc-700 border border-black/10 hover:bg-black/5'
           }`}
         >
-          <FileText className="w-4 h-4" />
+          <FileText className="w-4 h-4" aria-hidden="true" />
           1. Facts & Info About Candidate
         </button>
 
         <button
           type="button"
+          role="tab"
+          id="tab-agents"
+          aria-selected={activeTab === 'agents'}
+          aria-controls="panel-agents"
           onClick={() => setActiveTab('agents')}
-          className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+          className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-semibold transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-black focus-visible:outline-none ${
             activeTab === 'agents'
               ? 'bg-black text-white shadow-md'
-              : 'bg-white text-black/70 border border-black/10 hover:bg-black/5'
+              : 'bg-white text-zinc-700 border border-black/10 hover:bg-black/5'
           }`}
         >
-          <UserCheck className="w-4 h-4" />
+          <UserCheck className="w-4 h-4" aria-hidden="true" />
           2. 4 Independent Personas
         </button>
 
         <button
           type="button"
+          role="tab"
+          id="tab-debate"
+          aria-selected={activeTab === 'debate'}
+          aria-controls="panel-debate"
           onClick={() => setActiveTab('debate')}
-          className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+          className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-semibold transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-black focus-visible:outline-none ${
             activeTab === 'debate'
               ? 'bg-black text-white shadow-md'
-              : 'bg-white text-black/70 border border-black/10 hover:bg-black/5'
+              : 'bg-white text-zinc-700 border border-black/10 hover:bg-black/5'
           }`}
         >
-          <MessageSquare className="w-4 h-4" />
+          <MessageSquare className="w-4 h-4" aria-hidden="true" />
           3. Live Debate & Voice Session
         </button>
 
         <button
           type="button"
+          role="tab"
+          id="tab-decision"
+          aria-selected={activeTab === 'decision'}
+          aria-controls="panel-decision"
           onClick={() => setActiveTab('decision')}
-          className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+          className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-xs font-semibold transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-black focus-visible:outline-none ${
             activeTab === 'decision'
               ? 'bg-black text-white shadow-md'
-              : 'bg-white text-black/70 border border-black/10 hover:bg-black/5'
+              : 'bg-white text-zinc-700 border border-black/10 hover:bg-black/5'
           }`}
         >
-          <Award className="w-4 h-4" />
+          <Award className="w-4 h-4" aria-hidden="true" />
           4. Final Decision Report
         </button>
-      </div>      {/* ─────────────────────────────────────────────────────────────
+      </div>
+
+      {/* ─────────────────────────────────────────────────────────────
           SECTION 1: THE FACTS & INFO ABOUT CANDIDATE (Profile Builder)
          ───────────────────────────────────────────────────────────── */}
       {activeTab === 'profile' && (
-        <div className="space-y-6">
+        <div id="panel-profile" role="tabpanel" aria-labelledby="tab-profile" className="space-y-6">
           {/* Candidate Bio Header */}
           <div className="p-6 md:p-8 rounded-3xl bg-white border border-black/10 shadow-sm">
             <div className="flex items-center gap-3 mb-2">

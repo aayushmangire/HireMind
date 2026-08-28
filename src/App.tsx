@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import HomeHeroLandingScrollAnimation from "@/components/ui/home-hero-landing-scroll-animation";
 import { HandwritingSvg } from "@/components/ui/handwriting-svg";
 import EvaluationDashboard from "./components/evaluation/EvaluationDashboard";
@@ -16,13 +16,14 @@ import {
   CheckCircle2,
   Loader2,
   Briefcase,
-  X
+  X,
+  type LucideIcon
 } from "lucide-react";
 
 interface FileUploadDropzoneProps {
   label: string;
   description: string;
-  icon: any;
+  icon: LucideIcon;
   fileName: string | null;
   extractedText: string;
   required?: boolean;
@@ -65,18 +66,33 @@ function FileUploadDropzone({
     }
   };
 
-  const wordCount = extractedText.trim() ? extractedText.trim().split(/\s+/).length : 0;
+  const wordCount = useMemo(() => {
+    const trimmed = extractedText.trim();
+    return trimmed ? trimmed.split(/\s+/).length : 0;
+  }, [extractedText]);
+
   const isUploaded = Boolean(fileName && extractedText);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if ((e.key === "Enter" || e.key === " ") && !isUploaded) {
+      e.preventDefault();
+      fileInputRef.current?.click();
+    }
+  };
 
   return (
     <div
+      role="button"
+      tabIndex={isUploaded ? -1 : 0}
+      aria-label={`Upload ${label}`}
+      onKeyDown={handleKeyDown}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       onClick={() => {
         if (!isUploaded) fileInputRef.current?.click();
       }}
-      className={`p-5 rounded-3xl border-2 transition-all duration-200 relative group flex flex-col justify-between min-h-[220px] ${
+      className={`p-5 rounded-3xl border-2 transition-all duration-200 relative group flex flex-col justify-between min-h-[220px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 ${
         isDragging
           ? "border-black bg-black/5 scale-[1.01]"
           : isUploaded
@@ -89,6 +105,7 @@ function FileUploadDropzone({
         type="file"
         accept=".pdf,.txt"
         className="hidden"
+        aria-hidden="true"
         onChange={(e) => {
           const file = e.target.files?.[0];
           if (file) onFileSelect(file);
@@ -101,6 +118,7 @@ function FileUploadDropzone({
             className={`w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 ${
               isUploaded ? "bg-emerald-500 text-white shadow-sm" : "bg-black/5 text-black/70"
             }`}
+            aria-hidden="true"
           >
             <Icon className="w-5 h-5" />
           </div>
@@ -113,7 +131,7 @@ function FileUploadDropzone({
                 </span>
               )}
             </div>
-            <p className="text-[11px] text-black/50 leading-tight mt-0.5">{description}</p>
+            <p className="text-[11px] text-zinc-600 leading-tight mt-0.5">{description}</p>
           </div>
         </div>
 
@@ -124,8 +142,9 @@ function FileUploadDropzone({
               e.stopPropagation();
               onClear();
             }}
-            className="p-1.5 rounded-full hover:bg-black/10 text-black/40 hover:text-black transition-colors cursor-pointer"
+            className="p-1.5 rounded-full hover:bg-black/10 text-black/60 hover:text-black transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-black focus-visible:outline-none"
             title="Remove File"
+            aria-label={`Remove ${label} file`}
           >
             <X className="w-4 h-4" />
           </button>
@@ -141,10 +160,10 @@ function FileUploadDropzone({
               </span>
               <span className="text-xs font-semibold truncate text-[#141414]">{fileName}</span>
             </div>
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0 ml-2" />
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0 ml-2" aria-hidden="true" />
           </div>
 
-          <div className="flex items-center justify-between text-[11px] text-black/50 px-1">
+          <div className="flex items-center justify-between text-[11px] text-zinc-600 px-1">
             <span>{wordCount.toLocaleString()} words parsed</span>
             <button
               type="button"
@@ -152,7 +171,7 @@ function FileUploadDropzone({
                 e.stopPropagation();
                 fileInputRef.current?.click();
               }}
-              className="text-black font-semibold hover:underline cursor-pointer"
+              className="text-black font-semibold hover:underline cursor-pointer focus-visible:ring-2 focus-visible:ring-black focus-visible:outline-none rounded"
             >
               Replace
             </button>
@@ -160,15 +179,15 @@ function FileUploadDropzone({
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center py-4 text-center mt-auto">
-          <div className="w-9 h-9 rounded-full bg-black/5 flex items-center justify-center mb-2 text-black/60 group-hover:scale-110 transition-transform">
+          <div className="w-9 h-9 rounded-full bg-black/5 flex items-center justify-center mb-2 text-black/60 group-hover:scale-110 transition-transform" aria-hidden="true">
             <Upload className="w-4 h-4" />
           </div>
           <p className="text-xs font-medium text-black/80">
             Drop <span className="font-semibold text-black">.pdf</span> or{" "}
             <span className="font-semibold text-black">.txt</span> here
           </p>
-          <span className="text-[10px] text-black/40 mt-0.5">
-            Click to browse files
+          <span className="text-[10px] text-zinc-500 mt-0.5">
+            Click or press Enter to browse
           </span>
         </div>
       )}
@@ -193,21 +212,28 @@ export default function App() {
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
+    let ticking = false;
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 25);
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          setIsScrolled(window.scrollY > 25);
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const scrollToEvaluation = () => {
+  const scrollToEvaluation = useCallback(() => {
     const el = document.getElementById("evaluate");
     if (el) {
       el.scrollIntoView({ behavior: "smooth" });
     }
-  };
+  }, []);
 
-  const handleFileUpload = async (
+  const handleFileUpload = useCallback(async (
     file: File | undefined,
     setText: (t: string) => void,
     setFileName: (n: string | null) => void,
@@ -231,11 +257,12 @@ export default function App() {
           setCandidateName(detectedName);
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error reading uploaded file:", err);
+      alert(err.message || `Error reading ${file.name}`);
       setFileName(`Error loading ${file.name}`);
     }
-  };
+  }, []);
 
   const handleLaunchDebate = async () => {
     if (!resumeText.trim() && !transcriptText.trim()) return;
