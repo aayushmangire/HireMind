@@ -81,20 +81,28 @@ function extractDynamicProfile(
 
   const foundSkills: SkillItem[] = [];
 
+  // Escape regex special chars in skill names (e.g. C++, Next.js)
+  const escapeRegex = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
   knownSkillTaxonomy.forEach((skill) => {
-    const inResume = new RegExp(`\\b${skill}\\b`, 'i').test(resumeText);
-    const inTranscript = new RegExp(`\\b${skill}\\b`, 'i').test(transcriptText);
+    try {
+      const pattern = new RegExp(`\\b${escapeRegex(skill)}\\b`, 'i');
+      const inResume = pattern.test(resumeText);
+      const inTranscript = pattern.test(transcriptText);
 
-    if (inResume || inTranscript) {
-      const source: 'resume' | 'transcript' | 'both' =
-        inResume && inTranscript ? 'both' : inResume ? 'resume' : 'transcript';
-      const isCore = inResume && inTranscript;
+      if (inResume || inTranscript) {
+        const source: 'resume' | 'transcript' | 'both' =
+          inResume && inTranscript ? 'both' : inResume ? 'resume' : 'transcript';
+        const isCore = inResume && inTranscript;
 
-      foundSkills.push({
-        name: skill,
-        proficiency: isCore ? 'expert' : inTranscript ? 'advanced' : 'intermediate',
-        source,
-      });
+        foundSkills.push({
+          name: skill,
+          proficiency: isCore ? 'expert' : inTranscript ? 'advanced' : 'intermediate',
+          source,
+        });
+      }
+    } catch {
+      // Skip skills with problematic regex patterns
     }
   });
 

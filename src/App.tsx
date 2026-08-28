@@ -297,6 +297,7 @@ export default function App() {
   }, []);
 
   const handleLaunchDebate = async (presetCandidate?: SampleCandidate) => {
+    console.log('[HireMind] handleLaunchDebate called');
     let effectiveResume = resumeText;
     let effectiveTranscript = transcriptText;
     let effectiveJobDesc = jobDescription;
@@ -327,10 +328,13 @@ export default function App() {
       setCandidateName(effectiveName);
     }
 
+    console.log('[HireMind] Starting evaluation for:', effectiveName);
+    console.log('[HireMind] Resume length:', effectiveResume.length, 'Transcript length:', effectiveTranscript.length);
+
     setIsEvaluating(true);
     setEvaluationResult(null);
 
-    // Multi-stage animated simulation
+    // Quick progress animation
     setEvaluationProgress(25);
     setEvaluationStage("Extracting candidate profile, claims & verified skills...");
     await new Promise((r) => setTimeout(r, 120));
@@ -348,6 +352,7 @@ export default function App() {
     await new Promise((r) => setTimeout(r, 120));
 
     try {
+      console.log('[HireMind] Calling runCandidateEvaluation...');
       const result = await runCandidateEvaluation(
         effectiveResume,
         effectiveTranscript,
@@ -357,25 +362,50 @@ export default function App() {
         true
       );
 
+      console.log('[HireMind] Evaluation result received:', {
+        hasProfile: !!result?.candidate_profile,
+        hasAgents: !!result?.agent_evaluations,
+        agentCount: result?.agent_evaluations?.length,
+        hasDebate: !!result?.debate_rounds,
+        debateRounds: result?.debate_rounds?.length,
+        hasDecision: !!result?.final_decision,
+        profileName: result?.candidate_profile?.name,
+      });
+
       setEvaluationProgress(100);
       setEvaluationStage("Debate Complete! Rendering 4 AI Debate Dashboard...");
       await new Promise((r) => setTimeout(r, 80));
 
       setEvaluationResult(result);
       setIsEvaluating(false);
+      console.log('[HireMind] evaluationResult state SET, isEvaluating = false');
 
-      setTimeout(() => {
-        const evalEl = document.getElementById("evaluate");
-        if (evalEl) {
-          evalEl.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
-      }, 50);
+      // Aggressive scroll: wait for React re-render, then force scroll to results
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          const evalEl = document.getElementById("evaluate");
+          console.log('[HireMind] Scrolling to #evaluate element:', evalEl ? 'FOUND' : 'NOT FOUND');
+          if (evalEl) {
+            // Kill any GSAP ScrollTrigger interference
+            try {
+              const ScrollTrigger = (window as any).ScrollTrigger;
+              if (ScrollTrigger?.getAll) {
+                ScrollTrigger.getAll().forEach((st: any) => st.kill());
+                console.log('[HireMind] Killed GSAP ScrollTrigger instances');
+              }
+            } catch (e) {
+              // GSAP not on window, that's fine
+            }
+            evalEl.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        }, 100);
+      });
     } catch (err) {
-      console.error("Evaluation execution error:", err);
+      console.error("[HireMind] Evaluation execution error:", err);
       setIsEvaluating(false);
     }
-
   };
+
 
 
   return (
